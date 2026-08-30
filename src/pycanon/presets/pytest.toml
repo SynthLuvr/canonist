@@ -1,0 +1,12 @@
+# Canonical pytest + coverage gate for SynthLuvr Python repositories.
+# Consumers override via [tool.pycanon.pytest] and [tool.pycanon.coverage]
+# in pyproject.toml (deep-merged at invocation time; lists replace).
+[pytest]
+addopts = "--cov=src --cov-report=term-missing --cov-fail-under=80"
+testpaths = ["src/tests"]
+python_files = ["test_*.py"]
+
+[coverage.run]
+# Tests live under `src/`, so `--cov=src` would otherwise score the test files
+# themselves at ~100%, inflating the total and weakening the 80% gate.
+omit = ["src/tests/*"]

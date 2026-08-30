@@ -1,0 +1,19 @@
+# Canonical ruff configuration for SynthLuvr Python repositories.
+# Consumers override this via [tool.pycanon.ruff] in pyproject.toml;
+# py-canon deep-merges preset and overrides at invocation time
+# (later keys win, lists replace, tables merge recursively).
+target-version = "py314"
+line-length = 100
+
+[lint]
+select = ["E", "F", "W", "I", "UP", "B", "C4", "SIM", "TCH", "S"]
+
+[lint.per-file-ignores]
+# `assert` is the standard assertion primitive in tests, not a security risk.
+"src/tests/*" = ["S101"]
+
+[lint.isort]
+known-first-party = ["src"]
+# Makes the documented `from __future__ import annotations` convention a lint
+# error (I002) rather than an honour-system rule.
+required-imports = ["from __future__ import annotations"]

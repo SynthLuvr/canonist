@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - uses: astral-sh/setup-uv@v10.0.1
+
+      - name: Set up Python
+        run: uv python install 3.14
+
+      - name: Install dependencies
+        # --locked also fails the build if uv.lock is stale against pyproject.toml.
+        run: uv sync --all-extras --locked
+
+      - name: Lint (self-hosted: py-canon lints itself)
+        run: uv run python -m poethepoet lint
+
+      - name: Test
+        run: uv run python -m poethepoet test
+
+  # Stronger than ts-canon's link-self-host: the pipeline always runs against
+  # the *built artifact*, via a fresh venv that never sees the dev install.
+  self-host:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - uses: astral-sh/setup-uv@v10.0.1
+
+      - name: Set up Python
+        run: uv python install 3.14
+
+      - name: Build distribution
+        run: uv build
+
+      - name: Install the built wheel into a fresh venv
+        run: |
+          uv venv .host-venv
+          uv pip install --python .host-venv dist/*.whl
+
+      - name: Lint this repo with the built wheel
+        run: ./.host-venv/bin/python -m pycanon lint
+
+      - name: Test this repo with the built wheel
+        run: ./.host-venv/bin/python -m pycanon test
