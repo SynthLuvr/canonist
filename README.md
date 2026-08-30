@@ -104,8 +104,9 @@ pipeline against this checkout with the built artifact (see the `self-host` job 
 Semver: rule additions or threshold tightenings that can fail previously-green
 repos are **minor** bumps at minimum and are called out with each release;
 breaking CLI/config changes are **major**. Until 1.0, tighten freely but
-document. Releases are tag-driven (`v*`) and publish to PyPI via Trusted
-Publishing.
+document. Releases are dispatched from the **Release** workflow (exact version or
+patch/minor/major bump); it publishes to PyPI via Trusted Publishing, lands the
+version bump as a PR, tags `vX.Y.Z`, and creates the GitHub release.
 
 ## License
 
