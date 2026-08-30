@@ -1,7 +1,7 @@
 [project]
 name = "canonist"
 version = "0.1.0"
-description = "The SynthLuvr Python toolchain as one dependency: lint, format, test, doctor, migrate"
+description = "An opinionated Python toolchain as one versioned dependency: lint, format, test, doctor, migrate"
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]

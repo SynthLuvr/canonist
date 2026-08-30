@@ -1,4 +1,4 @@
-# Canonical pytest + coverage gate for SynthLuvr Python repositories.
+# Canonical pytest + coverage gate for Python repositories using canonist.
 # Consumers override via [tool.canonist.pytest] and [tool.canonist.coverage]
 # in pyproject.toml (deep-merged at invocation time; lists replace).
 [pytest]

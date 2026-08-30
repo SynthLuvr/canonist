@@ -1,14 +1,14 @@
 # canonist
 
-The SynthLuvr Python toolchain as **one versioned, distributable dependency**.
+An opinionated Python toolchain as **one versioned, distributable dependency**.
 Invoke as `python -m canonist` (no console-script launcher, so it works on
 managed Windows endpoints that block generated `.exe` stubs).
 
 One dev dependency replaces the duplicated Python toolchain — the Poe task blocks,
 `scripts/audit_deps.py`, `scripts/check_duplicates.py`, the ruff/pyright/pytest config
-blocks, and the six-package dev dependency set — across every Python repo in the org.
-Tool, rule, and preset changes happen here; consumers bump the version and the whole
-toolchain moves together.
+blocks, and the six-package dev dependency set — across every Python repo that adopts
+it. Tool, rule, and preset changes happen here; consumers bump the version and the
+whole toolchain moves together.
 
 ## Quick start (consumer)
 
