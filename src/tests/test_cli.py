@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from pycanon.bin import cli
-from pycanon.bin import doctor as doctor_mod
-from pycanon.bin import lint as lint_mod
-from pycanon.bin import migrate as migrate_mod
+from canonist.bin import cli
+from canonist.bin import doctor as doctor_mod
+from canonist.bin import lint as lint_mod
+from canonist.bin import migrate as migrate_mod
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -26,7 +26,7 @@ def test_help_exits_zero(capsys: pytest.CaptureFixture[str]) -> None:
 
 def test_version_exits_zero(capsys: pytest.CaptureFixture[str]) -> None:
     assert cli.main(["--version"]) == 0
-    assert capsys.readouterr().out.startswith("pycanon ")
+    assert capsys.readouterr().out.startswith("canonist ")
 
 
 def test_unknown_command_is_a_usage_error(capsys: pytest.CaptureFixture[str]) -> None:

@@ -1,6 +1,6 @@
 # Canonical ruff configuration for SynthLuvr Python repositories.
-# Consumers override this via [tool.pycanon.ruff] in pyproject.toml;
-# py-canon deep-merges preset and overrides at invocation time
+# Consumers override this via [tool.canonist.ruff] in pyproject.toml;
+# canonist deep-merges preset and overrides at invocation time
 # (later keys win, lists replace, tables merge recursively).
 target-version = "py314"
 line-length = 100

@@ -3,7 +3,7 @@ from __future__ import annotations
 import tomllib
 from typing import TYPE_CHECKING
 
-from pycanon.bin import migrate
+from canonist.bin import migrate
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -74,7 +74,7 @@ sequence = ["typecheck", "lint-check"]
 # The blocks identical to the presets must vanish entirely; only the
 # per-file-ignores delta (the repo-specific scripts/* path) survives as an
 # override — the preset already covers src/tests/*.
-EXPECTED_PYCANON_OVERRIDES = {
+EXPECTED_CANONIST_OVERRIDES = {
     "ruff": {"lint": {"per-file-ignores": {"scripts/*": ["S"]}}},
 }
 
@@ -82,8 +82,8 @@ EXPECTED_PYCANON_OVERRIDES = {
 def make_template_project(root: Path) -> Path:
     scripts = root / "scripts"
     scripts.mkdir(parents=True)
-    (scripts / "audit_deps.py").write_text("# ported into pycanon\n", encoding="utf-8")
-    (scripts / "check_duplicates.py").write_text("# ported into pycanon\n", encoding="utf-8")
+    (scripts / "audit_deps.py").write_text("# ported into canonist\n", encoding="utf-8")
+    (scripts / "check_duplicates.py").write_text("# ported into canonist\n", encoding="utf-8")
     (root / "pyproject.toml").write_text(TEMPLATE_PYPROJECT, encoding="utf-8")
     return root
 
@@ -93,12 +93,12 @@ def test_dependency_name() -> None:
     assert migrate.dependency_name("pip-audit>=2.10.1") == "pip-audit"
     assert migrate.dependency_name("pytest[colors]>=9.1.1") == "pytest"
     assert migrate.dependency_name("poethepoet") == "poethepoet"
-    assert migrate.dependency_name("py-canon @ git+https://example.invalid/x.git") == "py-canon"
+    assert migrate.dependency_name("canonist @ git+https://example.invalid/x.git") == "canonist"
 
 
 def test_swap_dev_dependencies() -> None:
     swapped = migrate.swap_dev_dependencies(["ruff>=0.16.3", "poethepoet>=0.48.0", "pytest>=9.1.1"])
-    assert swapped == ["poethepoet>=0.48.0", "py-canon>=0.1.0"]
+    assert swapped == ["poethepoet>=0.48.0", "canonist>=0.1.0"]
 
 
 def test_plan_swaps_dependencies_and_collapses_tasks(tmp_path: Path) -> None:
@@ -107,10 +107,10 @@ def test_plan_swaps_dependencies_and_collapses_tasks(tmp_path: Path) -> None:
     document = tomllib.loads(plan.new_pyproject)
 
     dev = document["project"]["optional-dependencies"]["dev"]
-    assert dev == ["poethepoet>=0.48.0", "py-canon>=0.1.0"]
+    assert dev == ["poethepoet>=0.48.0", "canonist>=0.1.0"]
 
     tasks = document["tool"]["poe"]["tasks"]
-    assert tasks["lint"]["cmd"] == "python -m pycanon lint"
+    assert tasks["lint"]["cmd"] == "python -m canonist lint"
     assert tasks["check"]["sequence"] == ["lint", "test"]
     assert "typecheck" not in tasks
 
@@ -126,7 +126,7 @@ def test_plan_ports_config_deltas_to_overrides(tmp_path: Path) -> None:
     document = tomllib.loads(migrate.plan_migration(project).new_pyproject)
     tool = document["tool"]
 
-    assert tool["pycanon"] == EXPECTED_PYCANON_OVERRIDES
+    assert tool["canonist"] == EXPECTED_CANONIST_OVERRIDES
     # The originals are gone (including the pyright block, identical to preset).
     for section in ("ruff", "pyright", "pytest", "coverage"):
         assert section not in tool
@@ -157,11 +157,11 @@ def test_apply_rewrites_and_deletes(tmp_path: Path, monkeypatch: pytest.MonkeyPa
     document = tomllib.loads((project / "pyproject.toml").read_text(encoding="utf-8"))
     assert document["project"]["optional-dependencies"]["dev"] == [
         "poethepoet>=0.48.0",
-        "py-canon>=0.1.0",
+        "canonist>=0.1.0",
     ]
     assert not (project / "scripts" / "audit_deps.py").exists()
     assert not (project / "scripts" / "check_duplicates.py").exists()
-    assert ".pycanon/" in (project / ".gitignore").read_text(encoding="utf-8")
+    assert ".canonist/" in (project / ".gitignore").read_text(encoding="utf-8")
 
 
 def test_missing_pyproject_is_a_usage_error(

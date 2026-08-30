@@ -11,7 +11,7 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
-from pycanon.lib import runner
+from canonist.lib import runner
 
 
 def build_export_command(requirements: Path) -> list[str]:

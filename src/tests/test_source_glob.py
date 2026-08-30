@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from pycanon.lib import source_glob
+from canonist.lib import source_glob
 from tests.fixturelib import make_project
 
 if TYPE_CHECKING:

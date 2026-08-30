@@ -18,7 +18,7 @@ def add(a: int, b: int) -> int:
     return a + b
 """
 
-# Annotated header but sloppy spacing: `pycanon format` must fix it.
+# Annotated header but sloppy spacing: `canonist format` must fix it.
 UNFORMATTED_MODULE = (
     "from __future__ import annotations\n\n\ndef  add( a:int,b:int )->int:\n    return a+b\n"
 )

@@ -12,7 +12,7 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from pycanon.lib import audit_deps, duplo, presets, runner, source_glob
+from canonist.lib import audit_deps, duplo, presets, runner, source_glob
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
@@ -69,11 +69,11 @@ def run_lint(paths: Sequence[str], *, fast: bool, keep: bool) -> int:
         total = len(steps)
         for index, (name, step) in enumerate(steps, start=1):
             if fast and name in SLOW_STEPS:
-                print(f"pycanon: [{index}/{total}] {name} SKIPPED (--fast)", file=sys.stderr)
+                print(f"canonist: [{index}/{total}] {name} SKIPPED (--fast)", file=sys.stderr)
                 continue
-            print(f"pycanon: [{index}/{total}] {name}", file=sys.stderr)
+            print(f"canonist: [{index}/{total}] {name}", file=sys.stderr)
             code = step()
             if code != 0:
-                print(f"pycanon: step '{name}' failed with exit code {code}", file=sys.stderr)
+                print(f"canonist: step '{name}' failed with exit code {code}", file=sys.stderr)
                 return code
         return 0

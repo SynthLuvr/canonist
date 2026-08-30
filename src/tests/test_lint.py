@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from pycanon.bin import lint as lint_cmd
+from canonist.bin import lint as lint_cmd
 from tests.fixturelib import make_project
 
 if TYPE_CHECKING:

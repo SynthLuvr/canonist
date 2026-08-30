@@ -5,7 +5,7 @@ import shutil
 import tomllib
 from pathlib import Path
 
-from pycanon.lib import presets
+from canonist.lib import presets
 from tests.fixturelib import BASE_PYPROJECT, make_project
 
 
@@ -34,11 +34,11 @@ def test_deep_merge_tables_and_list_replacement() -> None:
 def test_load_overrides(tmp_path: Path) -> None:
     project = make_project(
         tmp_path,
-        pyproject_extra='[tool.pycanon.ruff.lint.per-file-ignores]\n"scripts/*" = ["S"]\n',
+        pyproject_extra='[tool.canonist.ruff.lint.per-file-ignores]\n"scripts/*" = ["S"]\n',
     )
     overrides = presets.load_overrides(project)
     assert overrides["ruff"]["lint"]["per-file-ignores"]["scripts/*"] == ["S"]
-    # Absent pyproject / absent [tool.pycanon] both yield no overrides.
+    # Absent pyproject / absent [tool.canonist] both yield no overrides.
     assert presets.load_overrides(tmp_path / "nowhere") == {}
     bare = tmp_path / "bare"
     bare.mkdir()
@@ -73,24 +73,24 @@ def test_generated_configs_contents(tmp_path: Path) -> None:
 def test_generated_configs_removed_unless_kept(tmp_path: Path) -> None:
     project = make_project(tmp_path)
     with presets.generated_configs(project, targets=["src"], keep=False):
-        assert (project / ".pycanon").is_dir()
-    assert not (project / ".pycanon").exists()
+        assert (project / ".canonist").is_dir()
+    assert not (project / ".canonist").exists()
 
     with presets.generated_configs(project, targets=["src"], keep=True):
         pass
-    assert (project / ".pycanon" / "ruff.toml").is_file()
-    shutil.rmtree(project / ".pycanon")
+    assert (project / ".canonist" / "ruff.toml").is_file()
+    shutil.rmtree(project / ".canonist")
 
 
 def test_overrides_flow_into_generated_ruff_config(tmp_path: Path) -> None:
     project = make_project(
         tmp_path,
-        pyproject_extra='[tool.pycanon.ruff.lint.isort]\nknown-first-party = ["pycanon"]\n',
+        pyproject_extra='[tool.canonist.ruff.lint.isort]\nknown-first-party = ["canonist"]\n',
     )
     with presets.generated_configs(project, targets=["src"], keep=False) as config:
         merged = tomllib.loads(config.ruff.read_text(encoding="utf-8"))
     # The override replaced the list...
-    assert merged["lint"]["isort"]["known-first-party"] == ["pycanon"]
+    assert merged["lint"]["isort"]["known-first-party"] == ["canonist"]
     # ...while preset keys survive.
     assert merged["lint"]["isort"]["required-imports"] == ["from __future__ import annotations"]
     assert merged["lint"]["select"] == ["E", "F", "W", "I", "UP", "B", "C4", "SIM", "TCH", "S"]
@@ -102,7 +102,7 @@ def test_pytest_overrides_replace_addopts(tmp_path: Path) -> None:
     project = make_project(
         tmp_path,
         pyproject_extra=(
-            "[tool.pycanon.pytest]\n"
+            "[tool.canonist.pytest]\n"
             'addopts = "--cov=src --cov-report=term-missing --cov-fail-under=101"\n'
         ),
     )

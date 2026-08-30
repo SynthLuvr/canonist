@@ -25,7 +25,7 @@ jobs:
         # --locked also fails the build if uv.lock is stale against pyproject.toml.
         run: uv sync --all-extras --locked
 
-      - name: Lint (self-hosted: py-canon lints itself)
+      - name: Lint (self-hosted: canonist lints itself)
         run: uv run python -m poethepoet lint
 
       - name: Test
@@ -52,7 +52,7 @@ jobs:
           uv pip install --python .host-venv dist/*.whl
 
       - name: Lint this repo with the built wheel
-        run: ./.host-venv/bin/python -m pycanon lint
+        run: ./.host-venv/bin/python -m canonist lint
 
       - name: Test this repo with the built wheel
-        run: ./.host-venv/bin/python -m pycanon test
+        run: ./.host-venv/bin/python -m canonist test

@@ -6,7 +6,7 @@ from typing import cast
 
 import pytest
 
-from pycanon.lib.toml_write import TomlValue, TomlWriteError, dumps
+from canonist.lib.toml_write import TomlValue, TomlWriteError, dumps
 
 
 def test_scalars_and_lists_round_trip() -> None:

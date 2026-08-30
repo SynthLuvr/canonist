@@ -10,17 +10,17 @@ import sys
 from importlib import metadata
 from typing import TYPE_CHECKING
 
-from pycanon import __version__
-from pycanon.bin import doctor, lint, migrate, run_tests
-from pycanon.bin import format as format_cmd
+from canonist import __version__
+from canonist.bin import doctor, lint, migrate, run_tests
+from canonist.bin import format as format_cmd
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
 USAGE = """\
-pycanon - the SynthLuvr Python toolchain (lint | format | test | doctor | migrate)
+canonist - the SynthLuvr Python toolchain (lint | format | test | doctor | migrate)
 
-usage: python -m pycanon <command> [paths...] [options]
+usage: python -m canonist <command> [paths...] [options]
 
 commands:
   lint      fail-fast static pipeline: ruff format --check, ruff check,
@@ -28,11 +28,11 @@ commands:
   format    ruff format, then ruff check --fix (writes changes)
   test      pytest with the canonical coverage gate
   doctor    diagnose the environment, bundled tools, and generated configs
-  migrate   convert an existing repo to consume py-canon
+  migrate   convert an existing repo to consume canonist
 
 options:
   --fast          (lint) skip pip-audit and the duplication gate
-  --keep-config   keep the generated configs in .pycanon/ for inspection
+  --keep-config   keep the generated configs in .canonist/ for inspection
   --dry-run       (migrate) print the planned changes without applying them
   -h, --help      show this help
   -V, --version   show the version
@@ -55,7 +55,7 @@ KNOWN_FLAGS: frozenset[str] = frozenset[str]().union(*ALLOWED_FLAGS.values())
 def tool_version() -> str:
     """The installed distribution version, falling back to the package constant."""
     try:
-        return metadata.version("py-canon")
+        return metadata.version("canonist")
     except metadata.PackageNotFoundError:
         return __version__
 
@@ -90,7 +90,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(USAGE)
         return 0
     if command in {"-V", "--version"}:
-        print(f"pycanon {tool_version()}")
+        print(f"canonist {tool_version()}")
         return 0
 
     split = _split_arguments(rest)

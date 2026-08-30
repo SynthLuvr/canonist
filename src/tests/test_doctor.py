@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from pycanon.bin import doctor as doctor_mod
+from canonist.bin import doctor as doctor_mod
 from tests.fixturelib import make_project
 
 if TYPE_CHECKING:

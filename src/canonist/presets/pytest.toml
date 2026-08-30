@@ -1,5 +1,5 @@
 # Canonical pytest + coverage gate for SynthLuvr Python repositories.
-# Consumers override via [tool.pycanon.pytest] and [tool.pycanon.coverage]
+# Consumers override via [tool.canonist.pytest] and [tool.canonist.coverage]
 # in pyproject.toml (deep-merged at invocation time; lists replace).
 [pytest]
 addopts = "--cov=src --cov-report=term-missing --cov-fail-under=80"

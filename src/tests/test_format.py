@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from pycanon.bin import format as format_cmd
+from canonist.bin import format as format_cmd
 from tests.fixturelib import GOOD_MODULE, UNFIXABLE_MODULE, UNFORMATTED_MODULE, make_project
 
 if TYPE_CHECKING:
