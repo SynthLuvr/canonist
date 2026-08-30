@@ -1,6 +1,6 @@
 [project]
 name = "canonist"
-version = "0.1.0"
+version = "0.2.0"
 description = "An opinionated Python toolchain as one versioned dependency: lint, format, test, doctor, migrate"
 readme = "README.md"
 license = "MIT"
