@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
 USAGE = """\
-canonist - the SynthLuvr Python toolchain (lint | format | test | doctor | migrate)
+canonist - an opinionated Python toolchain (lint | format | test | doctor | migrate)
 
 usage: python -m canonist <command> [paths...] [options]
 

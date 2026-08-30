@@ -1,4 +1,4 @@
-"""canonist: the SynthLuvr Python toolchain as one versioned dependency.
+"""canonist: an opinionated Python toolchain as one versioned dependency.
 
 Distribution and import name are both ``canonist`` (pre-release this project
 was ``py-canon``/``pycanon``; never published to PyPI, so no alias remains).
