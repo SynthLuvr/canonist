@@ -31,3 +31,6 @@ Initial release: the ts-canon pattern ported to the python-template toolchain.
   ported `scripts/`, appends `.canonist/` to `.gitignore`.
 - Self-hosting: this repo lints/tests itself through its own CLI, and CI runs the
   pipeline from the built wheel in a fresh venv.
+- Fixed (Windows): the generated pyright config raised ``ValueError`` when the
+  consumer project and the running interpreter's venv sat on different drives
+  (the CI Windows matrix leg); such paths now fall back to absolute posix form.

@@ -188,20 +188,20 @@ def _pyright_config(
     """The effective pyright config: consumer overrides plus paths relative to ``root``."""
     config: dict[str, Any] = dict(as_table(overrides.get("pyright")))
     config["extends"] = "pyright.base.json"
-    include = [Path(relpath((project / target).resolve(), root)).as_posix() for target in targets]
+    include = [_posix_relpath((project / target).resolve(), root) for target in targets]
     config["include"] = include
     # The config lives in .canonist/, but imports resolve from the project root;
     # point the execution environment back at the project and put the src-layout
     # roots on the import path (both `pkg` and `src.pkg` consumer styles).
     config["executionEnvironments"] = [
-        {"root": Path(relpath(project, root)).as_posix(), "extraPaths": include}
+        {"root": _posix_relpath(project, root), "extraPaths": include}
     ]
     # Pin the interpreter canonist itself is running under: without an activated
     # venv, pyright falls back to the PATH interpreter and cannot resolve the
     # project's imports (bitten for real by the CI self-host job).
     venv = running_venv()
     if venv is not None:
-        config["venvPath"] = Path(relpath(venv.parent, root)).as_posix()
+        config["venvPath"] = _posix_relpath(venv.parent, root)
         config["venv"] = venv.name
     return config
 
@@ -218,6 +218,24 @@ def running_venv() -> Path | None:
         return None
     candidate = executable.parent.parent
     return candidate if (candidate / "pyvenv.cfg").is_file() else None
+
+
+def _posix_relpath(path: Path, start: Path) -> str:
+    """``relpath(path, start)`` in posix form, absolute fallback across drives.
+
+    ``os.path.relpath`` raises ``ValueError`` on Windows when the paths sit on
+    different drives — e.g. a consumer project under the temp dir on ``C:`` while
+    the running interpreter's venv lives on ``D:`` (exactly the CI matrix's
+    Windows leg). ``include``/``executionEnvironments.root`` are always under the
+    project, so only ``venvPath`` can actually cross drives; an absolute
+    ``venvPath`` is still valid for pyright (only ``include`` must remain
+    config-relative), so fall back to the absolute posix path instead of
+    crashing.
+    """
+    try:
+        return Path(relpath(path, start)).as_posix()
+    except ValueError:
+        return path.as_posix()
 
 
 def _render_ini(merged: Mapping[str, Any]) -> str:

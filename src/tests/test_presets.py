@@ -4,9 +4,13 @@ import json
 import shutil
 import tomllib
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from canonist.lib import presets
 from tests.fixturelib import BASE_PYPROJECT, make_project
+
+if TYPE_CHECKING:
+    import pytest
 
 
 def test_bundled_presets_load() -> None:
@@ -44,6 +48,33 @@ def test_load_overrides(tmp_path: Path) -> None:
     bare.mkdir()
     (bare / "pyproject.toml").write_text(BASE_PYPROJECT, encoding="utf-8")
     assert presets.load_overrides(bare) == {}
+
+
+def test_generated_configs_survive_cross_drive_relpath(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Windows: os.path.relpath raises across drives; the fallback must hold.
+
+    The CI Windows matrix leg hit this for real: consumer projects live in the
+    temp dir on ``C:`` while the running venv sits in the workspace on ``D:``.
+    """
+    project = make_project(tmp_path)
+
+    def raise_cross_drive(path: str, start: str) -> str:
+        raise ValueError("path is on mount 'D:', start on mount 'C:'")
+
+    monkeypatch.setattr(presets, "relpath", raise_cross_drive)
+    with presets.generated_configs(project, targets=["src"], keep=False) as config:
+        pyright = json.loads(config.pyright.read_text(encoding="utf-8"))
+        # Cross-drive: every path falls back to absolute posix form.
+        assert Path(pyright["include"][0]).is_absolute()
+        assert Path(pyright["executionEnvironments"][0]["root"]).is_absolute()
+        venv = presets.running_venv()
+        assert venv is not None, "tests always run inside a venv"
+        assert Path(str(pyright["venvPath"])).is_absolute()
+        # Joining an absolute path onto root keeps it; the pin still resolves.
+        pinned = config.root / Path(str(pyright["venvPath"])) / str(pyright["venv"])
+        assert pinned.resolve() == venv.resolve()
 
 
 def test_generated_configs_contents(tmp_path: Path) -> None:
