@@ -1,13 +1,8 @@
 name: Release
 
-# Manually triggered publish to PyPI using OIDC "trusted publishing" — no
-# long-lived PyPI token is stored. Authentication is a short-lived, per-run
-# OIDC token that PyPI verifies against the Trusted Publisher configured on
-# pypi.org (the same model as ts-canon's npm release workflow).
-#
-# Dispatch with an exact version, or leave it blank and pick a patch/minor/
-# major bump. The workflow runs the full check, bumps the version, publishes,
-# then lands the bump via PR, tags vX.Y.Z, and opens the GitHub release.
+# Manually dispatched release: full check → version bump → publish to PyPI
+# via OIDC trusted publishing (no PyPI token is stored) → version-bump PR →
+# vX.Y.Z tag and GitHub release.
 on:
   workflow_dispatch:
     inputs:
@@ -29,31 +24,24 @@ on:
         required: false
         default: ""
 
-# contents: write      -> push the release branch/tag, open the GitHub release
-# pull-requests: write -> open and merge the version-bump PR (see below)
-# id-token: write      -> required for PyPI OIDC trusted publishing
 permissions:
   contents: write
   pull-requests: write
-  id-token: write
+  id-token: write  # PyPI OIDC trusted publishing
 
-# Releases mutate the repo (PR + tag) and PyPI, so never run two at once and
-# never cancel one mid-flight.
+# Releases mutate the repo and PyPI: run one at a time, never cancel mid-flight.
 concurrency:
   group: release
   cancel-in-progress: false
 
 jobs:
   release:
-    # Only release from the default branch — keeps tags and PyPI aligned with
-    # what's on main.
+    # Keep tags and PyPI aligned with what's on main.
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    # The `pypi` environment is what the PyPI trusted publisher is registered
-    # against, so the OIDC exchange carries the matching environment claim.
+    # The PyPI trusted publisher is registered against the `pypi` environment,
+    # so the OIDC claim must carry it.
     environment: pypi
-    outputs:
-      version: ${{ steps.bump.outputs.version }}
     steps:
       - uses: actions/checkout@v7.0.1
 
@@ -68,32 +56,27 @@ jobs:
       - name: "Full check (dogfood: canonist lints and tests itself)"
         run: uv run python -m poethepoet check
 
-      # `uv version` writes pyproject.toml AND re-locks, so uv.lock stays in
-      # sync for CI's `--locked` install — the Python equivalent of
-      # `npm version --no-git-tag-version`.
+      # `uv version` writes pyproject.toml AND re-locks uv.lock, so CI's
+      # `--locked` install keeps passing.
       - name: Bump version
-        id: bump
         env:
           VERSION_INPUT: ${{ inputs.version }}
           BUMP: ${{ inputs.bump }}
         run: |
           set -euo pipefail
-          if [ -n "$VERSION_INPUT" ]; then
-            if ! printf '%s' "$VERSION_INPUT" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$'; then
-              echo "::error::'$VERSION_INPUT' is not a valid semver version"
-              exit 1
-            fi
+          semver='^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$'
+          if [ -z "$VERSION_INPUT" ]; then
+            uv version --bump "$BUMP" >/dev/null
+          elif grep -Eq "$semver" <<<"$VERSION_INPUT"; then
             uv version "$VERSION_INPUT"
           else
-            uv version --bump "$BUMP" >/dev/null
+            echo "::error::'$VERSION_INPUT' is not a valid semver version"
+            exit 1
           fi
-          new_version="$(uv version --short)"
-          echo "NEW_VERSION=${new_version}" >> "$GITHUB_ENV"
-          echo "version=${new_version}" >> "$GITHUB_OUTPUT"
+          echo "NEW_VERSION=$(uv version --short)" >> "$GITHUB_ENV"
 
-      # Skip publish when the version is already on PyPI, so a run that
-      # published but failed at a later step can be re-run to finish the
-      # PR/tag/release bookkeeping instead of failing with a file-exists error.
+      # A run that published but failed later can be re-dispatched to finish
+      # the PR/tag/release bookkeeping instead of failing on the existing upload.
       - name: Check if already published
         id: published
         run: |
@@ -108,37 +91,24 @@ jobs:
         if: steps.published.outputs.exists != 'true'
         run: uv build
 
-      # PyPI trusted publishing: the OIDC token (id-token: write above) is
-      # exchanged against the publisher configured on pypi.org — repository
-      # owner 'SynthLuvr', repository 'canonist', workflow 'release.yml',
-      # environment 'pypi'. No PyPI API token is stored anywhere.
       - name: Publish to PyPI
         if: steps.published.outputs.exists != 'true'
         uses: pypa/gh-action-pypi-publish@release/v1
 
-      # Every commit on main is a squash-merged PR, so the version bump goes
-      # through a short-lived PR too. With no required approvals the workflow
-      # merges its own PR immediately; branches and tags can be pushed
-      # directly.
-      #
-      # Requires the repo setting "Allow GitHub Actions to create and approve
-      # pull requests" (Settings -> Actions -> General -> Workflow
-      # permissions); without it gh pr create fails even though the token has
-      # pull-requests: write.
-      #
-      # Re-runnable: a partially-failed earlier attempt may have left the
-      # release branch and/or its PR behind. The workflow owns release/*
-      # branches, so an unconditional force push supersedes the stale copy,
-      # and an already-open PR is reused instead of recreated.
+      # The bump lands on main the way every commit here does: a squash-merged
+      # PR. Requires the repo setting "Allow GitHub Actions to create and
+      # approve pull requests"; without it gh pr create fails. Re-runnable:
+      # this workflow owns release/* branches, so force-push supersedes a
+      # stale branch and an already-open PR is reused.
       - name: Open and merge version-bump PR
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          git config user.name  "github-actions[bot]"
+          git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # checkout left HEAD detached; -B carries the bump onto a release branch.
           branch="release/v${NEW_VERSION}"
-          # checkout detaches HEAD; carry the bump onto a release branch.
           git checkout -B "$branch"
           git add pyproject.toml uv.lock
           git commit -m "Bump version to ${NEW_VERSION}"
@@ -152,15 +122,13 @@ jobs:
           if [ "$(gh pr view "$pr_url" --json state --jq .state)" = "OPEN" ]; then
             gh pr merge "$pr_url" --squash --delete-branch
           fi
-          merge_sha="$(gh pr view "$pr_url" --json mergeCommit --jq .mergeCommit.oid)"
-          echo "MERGE_SHA=${merge_sha}" >> "$GITHUB_ENV"
+          echo "MERGE_SHA=$(gh pr view "$pr_url" --json mergeCommit --jq .mergeCommit.oid)" >> "$GITHUB_ENV"
 
-      # Only tag and release once PyPI has accepted the package, so a failed
-      # publish never leaves an orphan tag or release.
-      #
-      # MERGE_SHA is born on the server via the squash merge and is NOT in
-      # this depth-1 clone — fetch it before tagging. Tolerate an existing
-      # tag/release so a re-run that only failed here can finish.
+      # Tag only after PyPI accepted the package, so a failed publish never
+      # leaves an orphan tag or release. MERGE_SHA is born on the server by the
+      # squash merge and is not in this depth-1 clone — fetch before tagging.
+      # Existing tag/release are tolerated so a re-run that only failed here
+      # can finish.
       - name: Tag and create GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -184,9 +152,7 @@ jobs:
           else
             body="Published canonist ${NEW_VERSION} to PyPI: https://pypi.org/pypi/canonist/${NEW_VERSION}/"
             if [ -n "$RELEASE_NOTES" ]; then
-              body="${body}
-
-          ${RELEASE_NOTES}"
+              body="$(printf '%s\n\n%s' "$body" "$RELEASE_NOTES")"
             fi
             gh release create "v${NEW_VERSION}" \
               --title "v${NEW_VERSION}" \
