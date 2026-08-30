@@ -25,7 +25,7 @@ jobs:
         # --locked also fails the build if uv.lock is stale against pyproject.toml.
         run: uv sync --all-extras --locked
 
-      - name: Lint (self-hosted: canonist lints itself)
+      - name: "Lint (self-hosted: canonist lints itself)"
         run: uv run python -m poethepoet lint
 
       - name: Test
