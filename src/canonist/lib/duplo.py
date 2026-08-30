@@ -26,9 +26,12 @@ import urllib.request
 import zipfile
 from pathlib import Path
 
+from canonist.lib import presets
+
 DUPLO_VERSION = "0.2.0"
 DEFAULT_THRESHOLD = 5.0
 DEFAULT_MIN_LINES = 4
+
 _BASE_URL = "https://github.com/toniantunovi/lucidshark-duplo/releases/download"
 
 _UNAVAILABLE_HELP = """\
@@ -42,6 +45,24 @@ _ARCH_BY_MACHINE = {
     "aarch64": "aarch64",
     "arm64": "aarch64",
 }
+
+
+def configured_threshold(project: Path) -> float:
+    """The configured duplication threshold: ``[tool.canonist.duplo] threshold``.
+
+    Consumers whose codebase sits above the canonical 5% (e.g. many
+    structurally similar adapters) can raise it explicitly; the value must be
+    a positive number. Raises ``ValueError`` otherwise so misconfiguration
+    fails loudly at pipeline start.
+    """
+    section = presets.as_table(presets.load_overrides(project).get("duplo"))
+    value = section.get("threshold", DEFAULT_THRESHOLD)
+    # bool is an int subclass, so TOML true/false would otherwise pass as 1/0.
+    if isinstance(value, bool) or not isinstance(value, int | float) or value <= 0:
+        raise ValueError(
+            f"invalid [tool.canonist.duplo] threshold: {value!r} (expected a positive number)"
+        )
+    return float(value)
 
 
 def cache_dir() -> Path:

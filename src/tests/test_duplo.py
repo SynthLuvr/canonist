@@ -2,12 +2,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import pytest
+
 from canonist.lib import duplo
+from tests.fixturelib import make_project
 
 if TYPE_CHECKING:
     from pathlib import Path
-
-    import pytest
 
 
 def test_parse_duplication_percent() -> None:
@@ -87,3 +88,27 @@ def test_cached_binary_path_shape() -> None:
     cached = duplo.cache_dir() / f"v{duplo.DUPLO_VERSION}" / duplo.binary_name()
     assert cached.name.startswith("lucidshark-duplo")
     assert f"v{duplo.DUPLO_VERSION}" in str(cached)
+
+
+def test_configured_threshold_defaults_without_overrides(tmp_path: Path) -> None:
+    make_project(tmp_path)
+    assert duplo.configured_threshold(tmp_path) == 5.0
+
+
+def test_configured_threshold_reads_canonist_override(tmp_path: Path) -> None:
+    make_project(tmp_path, pyproject_extra="[tool.canonist.duplo]\nthreshold = 12.5\n")
+    assert duplo.configured_threshold(tmp_path) == 12.5
+
+
+def test_configured_threshold_accepts_integer_override(tmp_path: Path) -> None:
+    make_project(tmp_path, pyproject_extra="[tool.canonist.duplo]\nthreshold = 9\n")
+    assert duplo.configured_threshold(tmp_path) == 9.0
+
+
+def test_configured_threshold_rejects_bad_values(tmp_path: Path) -> None:
+    for index, bad in enumerate(["0", "-1", '"high"', "true"]):
+        project = make_project(
+            tmp_path / f"case{index}", pyproject_extra=f"[tool.canonist.duplo]\nthreshold = {bad}\n"
+        )
+        with pytest.raises(ValueError, match=r"invalid \[tool.canonist.duplo\] threshold"):
+            duplo.configured_threshold(project)
