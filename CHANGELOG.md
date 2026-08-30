@@ -5,7 +5,8 @@ consumer repos are called out explicitly (semver policy: at least a minor bump).
 
 ## 0.1.0 - 2026-08-30
 
-Initial release: the ts-canon pattern ported to the python-template toolchain.
+Initial release: the python-template toolchain consolidated into one versioned,
+distributable dependency.
 
 > Renamed from `py-canon` to `canonist` before first publication (the `py-canon`
 > name was not registrable on PyPI). No `py-canon` release ever shipped, so the

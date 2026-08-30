@@ -1,7 +1,6 @@
 """The format pipeline: ``ruff format`` then ``ruff check --fix``.
 
-Unlike ts-canon (which pipes convert-to-arrow → ast-grep → biome), ruff *is*
-the canonical Python formatter, so no extra chain is needed.
+ruff *is* the canonical Python formatter, so no extra chain is needed.
 """
 
 from __future__ import annotations

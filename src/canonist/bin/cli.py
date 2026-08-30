@@ -1,7 +1,7 @@
 """Command dispatch, usage, and exit codes.
 
-Exit codes follow ts-canon: ``0`` for success/help, ``2`` for usage errors,
-otherwise the failing step's code propagates.
+Exit codes: ``0`` for success/help, ``2`` for usage errors, otherwise the
+failing step's code propagates.
 """
 
 from __future__ import annotations

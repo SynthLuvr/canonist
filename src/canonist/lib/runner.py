@@ -1,10 +1,9 @@
 """Subprocess helpers.
 
-Nothing runs through a shell, and bundled tools run as
+Nothing runs through a shell (no ``.CMD`` shims), and bundled tools run as
 ``[sys.executable, "-m", tool]`` so no generated console-script launchers are
-needed — the Python twin of ts-canon's runner rationale ("no shells, no
-``.CMD`` shims"). This keeps the toolchain usable on managed Windows endpoints
-that block low-prevalence executables.
+needed. This keeps the toolchain usable on managed Windows endpoints that
+block low-prevalence executables.
 """
 
 from __future__ import annotations

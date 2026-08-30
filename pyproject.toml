@@ -4,9 +4,9 @@ version = "0.1.0"
 description = "The SynthLuvr Python toolchain as one dependency: lint, format, test, doctor, migrate"
 readme = "README.md"
 requires-python = ">=3.14"
-# The bundled tools are hard dependencies on purpose (the ts-canon pattern):
-# Python dependency groups are not transitive, so a dev-group here would not
-# reach consumers. Every tool moves in lockstep with this package's version.
+# The bundled tools are hard dependencies on purpose: Python dependency
+# groups are not transitive, so a dev-group here would not reach consumers.
+# Every tool moves in lockstep with this package's version.
 dependencies = [
     "pip-audit>=2.10.1",
     "pyright>=1.1.411",
@@ -16,8 +16,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# Poe stays consumer-side (like ts-canon's typescript/pandoc exceptions): it is
-# the shell around the tools, not a tool.
+# Poe stays consumer-side: it is the shell around the tools, not a tool.
 dev = [
     "poethepoet>=0.48.0",
 ]
