@@ -32,11 +32,11 @@ def test_pipeline_order_and_fail_fast(
         order.append(" ".join(command))
         return 0
 
-    def fake_gate() -> int:
+    def fake_gate(threshold: float = 5.0) -> int:
         order.append("duplo")
         return 0
 
-    def fake_audit(project_arg: Path) -> int:
+    def fake_audit(project_arg: Path, *, service: str = "pypi") -> int:
         order.append("audit")
         return 0
 
@@ -71,11 +71,11 @@ def test_fast_skips_audit_and_duplo(
 
     monkeypatch.setattr(lint_cmd.runner, "run_module", fake_run_module)
 
-    def fake_gate() -> int:
+    def fake_gate(threshold: float = 5.0) -> int:
         order.append("duplo")
         return 0
 
-    def fake_audit(project_arg: Path) -> int:
+    def fake_audit(project_arg: Path, *, service: str = "pypi") -> int:
         order.append("audit")
         return 0
 
@@ -131,3 +131,61 @@ def test_no_targets_is_a_usage_error(
     monkeypatch.chdir(tmp_path)
     assert lint_cmd.run_lint([], fast=False, keep=False) == 2
     assert "no lint targets" in capsys.readouterr().err
+
+
+def test_audit_and_duplo_settings_flow_from_overrides(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project = make_project(
+        tmp_path,
+        pyproject_extra=(
+            '[tool.canonist.audit]\nservice = "osv"\n\n[tool.canonist.duplo]\nthreshold = 12.5\n'
+        ),
+    )
+    (project / "uv.lock").write_text("", encoding="utf-8")
+    monkeypatch.chdir(project)
+    monkeypatch.delenv("CI", raising=False)
+    seen: dict[str, object] = {}
+
+    def fake_run_module(module: str, args: Sequence[str] = (), *, cwd: Path | None = None) -> int:
+        return 0
+
+    def fake_run_command(command: Sequence[str], *, cwd: Path | None = None) -> int:
+        return 0
+
+    def fake_gate(threshold: float = 5.0) -> int:
+        seen["threshold"] = threshold
+        return 0
+
+    def fake_audit(project_arg: Path, *, service: str = "pypi") -> int:
+        seen["service"] = service
+        return 0
+
+    monkeypatch.setattr(lint_cmd.runner, "run_module", fake_run_module)
+    monkeypatch.setattr(lint_cmd.runner, "run_command", fake_run_command)
+    monkeypatch.setattr(lint_cmd.duplo, "gate", fake_gate)
+    monkeypatch.setattr(lint_cmd.audit_deps, "run_audit", fake_audit)
+
+    assert lint_cmd.run_lint([], fast=False, keep=False) == 0
+    assert seen == {"service": "osv", "threshold": 12.5}
+
+
+def test_invalid_gate_settings_are_usage_errors(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    monkeypatch.chdir(
+        make_project(tmp_path, pyproject_extra='[tool.canonist.audit]\nservice = "nonsense"\n')
+    )
+    assert lint_cmd.run_lint([], fast=False, keep=False) == 2
+    assert "invalid [tool.canonist.audit] service" in capsys.readouterr().err
+
+    monkeypatch.chdir(
+        make_project(
+            tmp_path / "other", pyproject_extra='[tool.canonist.duplo]\nthreshold = "high"\n'
+        )
+    )
+    assert lint_cmd.run_lint([], fast=False, keep=False) == 2
+    assert "invalid [tool.canonist.duplo] threshold" in capsys.readouterr().err

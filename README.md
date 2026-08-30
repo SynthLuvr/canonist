@@ -69,6 +69,16 @@ true local deltas in `pyproject.toml`:
 "scripts/*" = ["S"]          # repo-specific paths; preset values elsewhere survive
 ```
 
+Two non-preset gates are configurable the same way:
+
+```toml
+[tool.canonist.audit]
+service = "osv"              # pip-audit vulnerability service (default: pypi)
+
+[tool.canonist.duplo]
+threshold = 10.0             # duplication-gate percentage (default: 5.0)
+```
+
 `.canonist/` is removed after every run unless `--keep-config` is passed (add it to
 `.gitignore`; `migrate` does this for you).
 
@@ -83,8 +93,14 @@ python-template.
 
 ## Gates and skip policies
 
-- **Audit (SCA)** — `uv export` → `pip-audit --strict`; skipped by `--fast`.
-- **Duplication gate** — lucidshark-duplo, 5% threshold. If the binary cannot be
+- **Audit (SCA)** — `uv export` → `pip-audit --strict`; skipped by `--fast`. The
+  vulnerability service defaults to pip-audit's PyPI-JSON API; set
+  `[tool.canonist.audit] service = "osv"` when the audited set contains
+  PEP 440 local-version builds (e.g. `torch==2.13.0+cu126` from a CUDA index),
+  which the PyPI service cannot resolve — OSV audits them fine.
+- **Duplication gate** — lucidshark-duplo, 5% threshold, overridable per
+  consumer via `[tool.canonist.duplo] threshold` (a positive number) when the
+  codebase legitimately sits above the canonical bar. If the binary cannot be
   downloaded or executed it **fails in CI** and prints `SKIPPED` locally (a loud
   non-pass, not a silent one). `LUCIDSHARK_DUPLO` points at an approved copy.
 - **Lockfile freshness** — `uv lock --check`; a repo without `uv.lock` skips locally

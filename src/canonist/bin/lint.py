@@ -2,7 +2,9 @@
 
 Steps: ruff format --check + ruff check; pyright (strict); uv lock --check;
 pip-audit (SCA); lucidshark-duplo (duplication gate). ``--fast`` skips the
-two slow steps (audit, duplication gate).
+two slow steps (audit, duplication gate). The audit service
+(``[tool.canonist.audit] service``) and the duplication threshold
+(``[tool.canonist.duplo] threshold``) are configurable per consumer.
 """
 
 from __future__ import annotations
@@ -47,6 +49,12 @@ def run_lint(paths: Sequence[str], *, fast: bool, keep: bool) -> int:
         )
         return 2
     with presets.generated_configs(project, targets=targets, keep=keep) as config:
+        try:
+            service = audit_deps.audit_service(project)
+            threshold = duplo.configured_threshold(project)
+        except ValueError as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 2
         steps: list[tuple[str, Callable[[], int]]] = [
             (
                 "ruff format --check",
@@ -62,8 +70,8 @@ def run_lint(paths: Sequence[str], *, fast: bool, keep: bool) -> int:
             ),
             ("pyright", lambda: runner.run_module("pyright", ["-p", str(config.pyright.parent)])),
             ("uv lock --check", lambda: lock_check(project)),
-            ("pip-audit", lambda: audit_deps.run_audit(project)),
-            ("duplo", lambda: duplo.gate()),
+            ("pip-audit", lambda: audit_deps.run_audit(project, service=service)),
+            ("duplo", lambda: duplo.gate(threshold=threshold)),
         ]
         total = len(steps)
         for index, (name, step) in enumerate(steps, start=1):
