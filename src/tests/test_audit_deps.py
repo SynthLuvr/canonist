@@ -103,8 +103,3 @@ def test_run_audit_passes_service_through(tmp_path: Path, monkeypatch: pytest.Mo
 
     assert audit_deps.run_audit(tmp_path, service="osv") == 0
     assert audit_args[-2:] == ["-s", "osv"]
-
-
-def test_run_audit_rejects_unknown_service(tmp_path: Path) -> None:
-    with pytest.raises(ValueError, match="invalid audit service"):
-        audit_deps.run_audit(tmp_path, service="nonsense")

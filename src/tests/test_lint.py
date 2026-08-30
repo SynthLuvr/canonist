@@ -32,11 +32,11 @@ def test_pipeline_order_and_fail_fast(
         order.append(" ".join(command))
         return 0
 
-    def fake_gate(threshold: float = 5.0) -> int:
+    def fake_gate(threshold: float) -> int:
         order.append("duplo")
         return 0
 
-    def fake_audit(project_arg: Path, *, service: str = "pypi") -> int:
+    def fake_audit(project_arg: Path, *, service: str) -> int:
         order.append("audit")
         return 0
 
@@ -71,11 +71,11 @@ def test_fast_skips_audit_and_duplo(
 
     monkeypatch.setattr(lint_cmd.runner, "run_module", fake_run_module)
 
-    def fake_gate(threshold: float = 5.0) -> int:
+    def fake_gate(threshold: float) -> int:
         order.append("duplo")
         return 0
 
-    def fake_audit(project_arg: Path, *, service: str = "pypi") -> int:
+    def fake_audit(project_arg: Path, *, service: str) -> int:
         order.append("audit")
         return 0
 
@@ -154,11 +154,11 @@ def test_audit_and_duplo_settings_flow_from_overrides(
     def fake_run_command(command: Sequence[str], *, cwd: Path | None = None) -> int:
         return 0
 
-    def fake_gate(threshold: float = 5.0) -> int:
+    def fake_gate(threshold: float) -> int:
         seen["threshold"] = threshold
         return 0
 
-    def fake_audit(project_arg: Path, *, service: str = "pypi") -> int:
+    def fake_audit(project_arg: Path, *, service: str) -> int:
         seen["service"] = service
         return 0
 

@@ -48,13 +48,13 @@ def run_lint(paths: Sequence[str], *, fast: bool, keep: bool) -> int:
             file=sys.stderr,
         )
         return 2
+    try:
+        service = audit_deps.audit_service(project)
+        threshold = duplo.configured_threshold(project)
+    except ValueError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
     with presets.generated_configs(project, targets=targets, keep=keep) as config:
-        try:
-            service = audit_deps.audit_service(project)
-            threshold = duplo.configured_threshold(project)
-        except ValueError as exc:
-            print(f"error: {exc}", file=sys.stderr)
-            return 2
         steps: list[tuple[str, Callable[[], int]]] = [
             (
                 "ruff format --check",

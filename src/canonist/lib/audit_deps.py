@@ -57,9 +57,6 @@ def audit_service(project: Path) -> str:
 
 def run_audit(project: Path, *, service: str = DEFAULT_SERVICE) -> int:
     """Export and audit the project's production dependencies; return the exit code."""
-    if service not in SERVICES:
-        expected = ", ".join(sorted(SERVICES))
-        raise ValueError(f"invalid audit service: {service!r} (expected one of {expected})")
     with tempfile.TemporaryDirectory() as tmp_dir:
         requirements = Path(tmp_dir) / "requirements.txt"
         code = runner.run_command(build_export_command(requirements), cwd=project)
