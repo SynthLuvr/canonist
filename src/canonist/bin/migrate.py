@@ -1,9 +1,9 @@
-"""Convert an existing python-template-style repository to consume py-canon.
+"""Convert an existing python-template-style repository to consume canonist.
 
-Rewrites ``pyproject.toml`` (bundled tool dev-dependencies → ``py-canon``,
-Poe tasks collapsed to ``python -m pycanon …``, tool config blocks ported to
-``[tool.pycanon.*]`` preset overrides), deletes the ported ``scripts/``
-helpers, and appends ``.pycanon/`` to ``.gitignore``.
+Rewrites ``pyproject.toml`` (bundled tool dev-dependencies → ``canonist``,
+Poe tasks collapsed to ``python -m canonist …``, tool config blocks ported to
+``[tool.canonist.*]`` preset overrides), deletes the ported ``scripts/``
+helpers, and appends ``.canonist/`` to ``.gitignore``.
 
 Non-registry sources (``git``, ``file:``, ``path``, ``workspace`` entries)
 survive untouched: only the six known tool dependencies are removed by name.
@@ -23,17 +23,17 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
-from pycanon.lib import presets
-from pycanon.lib.presets import as_table
-from pycanon.lib.toml_write import TomlValue
-from pycanon.lib.toml_write import dumps as toml_dumps
+from canonist.lib import presets
+from canonist.lib.presets import as_table
+from canonist.lib.toml_write import TomlValue
+from canonist.lib.toml_write import dumps as toml_dumps
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
 PORTED_SCRIPTS = ("scripts/audit_deps.py", "scripts/check_duplicates.py")
 BUNDLED_TOOL_DEPS = frozenset({"ruff", "pyright", "pytest", "pytest-cov", "pip-audit"})
-PY_CANON_REQUIREMENT = "py-canon>=0.1.0"
+CANONIST_REQUIREMENT = "canonist>=0.1.0"
 _NAME_SPLIT = re.compile(r"[<>=!~;\[\s]")
 _MISSING = object()
 
@@ -51,10 +51,10 @@ def dependency_name(requirement: str) -> str:
 
 
 def swap_dev_dependencies(dependencies: Sequence[str]) -> list[str]:
-    """Drop the bundled tools, keep everything else, ensure py-canon is present."""
+    """Drop the bundled tools, keep everything else, ensure canonist is present."""
     kept = [dep for dep in dependencies if dependency_name(dep) not in BUNDLED_TOOL_DEPS]
-    if all(dependency_name(dep) != "py-canon" for dep in kept):
-        kept.append(PY_CANON_REQUIREMENT)
+    if all(dependency_name(dep) != "canonist" for dep in kept):
+        kept.append(CANONIST_REQUIREMENT)
     return kept
 
 
@@ -76,7 +76,7 @@ def _migrate_dependencies(document: dict[str, Any]) -> None:
         return
     project = as_table(document.get("project"))
     optional = as_table(project.get("optional-dependencies"))
-    optional["dev"] = [PY_CANON_REQUIREMENT]
+    optional["dev"] = [CANONIST_REQUIREMENT]
     project["optional-dependencies"] = optional
     document["project"] = project
 
@@ -84,13 +84,13 @@ def _migrate_dependencies(document: dict[str, Any]) -> None:
 def canonical_poe_tasks() -> dict[str, Any]:
     """The collapsed consumer task block every migrated repo gets."""
     return {
-        "lint": {"help": "Full static pipeline via py-canon", "cmd": "python -m pycanon lint"},
+        "lint": {"help": "Full static pipeline via canonist", "cmd": "python -m canonist lint"},
         "format": {
             "help": "Auto-format and auto-fix lint issues",
-            "cmd": "python -m pycanon format",
+            "cmd": "python -m canonist format",
         },
-        "test": {"help": "Test suite with the coverage gate", "cmd": "python -m pycanon test"},
-        "doctor": {"help": "Diagnose the environment", "cmd": "python -m pycanon doctor"},
+        "test": {"help": "Test suite with the coverage gate", "cmd": "python -m canonist test"},
+        "doctor": {"help": "Diagnose the environment", "cmd": "python -m canonist doctor"},
         "check": {"help": "Everything: lint plus tests", "sequence": ["lint", "test"]},
     }
 
@@ -144,7 +144,7 @@ def plan_migration(project: Path) -> MigrationPlan:
     tool["poe"] = {"tasks": canonical_poe_tasks()}
     overrides = _migrate_tool_config(tool)
     if overrides:
-        tool["pycanon"] = overrides
+        tool["canonist"] = overrides
     document["tool"] = tool
     new_text = toml_dumps(cast("dict[str, TomlValue]", document))
     deletions = tuple(
@@ -154,7 +154,7 @@ def plan_migration(project: Path) -> MigrationPlan:
 
 
 def run_migrate(paths: Sequence[str], *, dry_run: bool) -> int:
-    """Migrate the project at ``paths[0]`` (default: cwd) to consume py-canon."""
+    """Migrate the project at ``paths[0]`` (default: cwd) to consume canonist."""
     project = Path(paths[0]).resolve() if paths else Path.cwd()
     try:
         plan = plan_migration(project)
@@ -163,9 +163,9 @@ def run_migrate(paths: Sequence[str], *, dry_run: bool) -> int:
         return 2
     _print_diff(plan.old_pyproject, plan.new_pyproject)
     for file in plan.delete_files:
-        print(f"pycanon: {'would delete' if dry_run else 'deleting'} {file}", file=sys.stderr)
+        print(f"canonist: {'would delete' if dry_run else 'deleting'} {file}", file=sys.stderr)
     if dry_run:
-        print("pycanon: dry run; nothing changed.", file=sys.stderr)
+        print("canonist: dry run; nothing changed.", file=sys.stderr)
         return 0
 
     (project / "pyproject.toml").write_text(plan.new_pyproject, encoding="utf-8")
@@ -173,8 +173,8 @@ def run_migrate(paths: Sequence[str], *, dry_run: bool) -> int:
         file.unlink()
     _ensure_gitignore(project)
     print(
-        "pycanon: migration applied. Next: run `uv sync --all-extras` to refresh uv.lock, "
-        "update README/AGENTS to point at py-canon, and review the diff before merging "
+        "canonist: migration applied. Next: run `uv sync --all-extras` to refresh uv.lock, "
+        "update README/AGENTS to point at canonist, and review the diff before merging "
         "(reverting this commit is the rollback).",
         file=sys.stderr,
     )
@@ -196,9 +196,9 @@ def _print_diff(old_text: str, new_text: str) -> None:
 def _ensure_gitignore(project: Path) -> None:
     gitignore = project / ".gitignore"
     existing = gitignore.read_text(encoding="utf-8") if gitignore.is_file() else ""
-    if ".pycanon/" in existing:
+    if ".canonist/" in existing:
         return
-    addition = "# py-canon generated configs (kept only with --keep-config)\n.pycanon/\n"
+    addition = "# canonist generated configs (kept only with --keep-config)\n.canonist/\n"
     gitignore.write_text(
         existing + ("" if existing.endswith("\n") or not existing else "\n") + addition,
         encoding="utf-8",

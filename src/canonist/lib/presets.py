@@ -1,15 +1,15 @@
 """Bundled presets and per-invocation config generation.
 
-py-canon ships canonical ruff, pyright, and pytest/coverage presets inside the
+canonist ships canonical ruff, pyright, and pytest/coverage presets inside the
 wheel. Python has no version-independent ``node_modules``-style path (a literal
 ``extends`` pointing into site-packages breaks on every minor Python bump),
 and ruff rejects more than one ``--config`` file — so at invocation time
-py-canon writes the *effective* config: preset deep-merged with the consumer's
-``[tool.pycanon.*]`` overrides in ``pyproject.toml``.
+canonist writes the *effective* config: preset deep-merged with the consumer's
+``[tool.canonist.*]`` overrides in ``pyproject.toml``.
 
 Merge semantics: later keys win, lists replace, tables merge recursively.
 
-The generated files land in ``<project>/.pycanon/`` and are removed after the
+The generated files land in ``<project>/.canonist/`` and are removed after the
 run unless ``--keep-config`` is passed. The pyright config lives *inside* the
 project because pyright resolves ``include`` paths relative to the config
 file's directory and rejects absolute paths — ``../src`` stays portable.
@@ -30,12 +30,12 @@ from os.path import relpath
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
-from pycanon.lib.toml_write import dumps as toml_dumps
+from canonist.lib.toml_write import dumps as toml_dumps
 
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
 
-CONFIG_DIR_NAME = ".pycanon"
+CONFIG_DIR_NAME = ".canonist"
 
 
 @dataclass(frozen=True)
@@ -77,14 +77,14 @@ def load_pytest_preset() -> dict[str, Any]:
 
 
 def load_overrides(project: Path) -> dict[str, Any]:
-    """Read ``[tool.pycanon]`` from the consumer's pyproject.toml (``{}`` if absent)."""
+    """Read ``[tool.canonist]`` from the consumer's pyproject.toml (``{}`` if absent)."""
     pyproject = project / "pyproject.toml"
     if not pyproject.is_file():
         return {}
     with pyproject.open("rb") as handle:
         document = tomllib.load(handle)
     tool = as_table(document.get("tool"))
-    return as_table(tool.get("pycanon"))
+    return as_table(tool.get("canonist"))
 
 
 def deep_merge(base: Mapping[str, Any], override: Mapping[str, Any]) -> dict[str, Any]:
@@ -127,7 +127,7 @@ def test_paths(project: Path, paths: Sequence[str]) -> list[str]:
 class generated_configs:
     """Context manager yielding the effective configs for one invocation.
 
-    Writes ``<project>/.pycanon/`` on construction and removes it on exit
+    Writes ``<project>/.canonist/`` on construction and removes it on exit
     unless ``keep`` is set. Implemented as a class (not ``@contextmanager``,
     which typeshed marks deprecated) so the bundle is available immediately.
     """
@@ -140,7 +140,7 @@ class generated_configs:
         self._bundle = _build(project, root, targets)
         self._keep = keep
         suffix = " (kept: --keep-config)" if keep else ""
-        print(f"pycanon: generated configs in {root}{suffix}", file=sys.stderr)
+        print(f"canonist: generated configs in {root}{suffix}", file=sys.stderr)
 
     def __enter__(self) -> GeneratedConfigs:
         return self._bundle
@@ -188,20 +188,20 @@ def _pyright_config(
     """The effective pyright config: consumer overrides plus paths relative to ``root``."""
     config: dict[str, Any] = dict(as_table(overrides.get("pyright")))
     config["extends"] = "pyright.base.json"
-    include = [Path(relpath((project / target).resolve(), root)).as_posix() for target in targets]
+    include = [_posix_relpath((project / target).resolve(), root) for target in targets]
     config["include"] = include
-    # The config lives in .pycanon/, but imports resolve from the project root;
+    # The config lives in .canonist/, but imports resolve from the project root;
     # point the execution environment back at the project and put the src-layout
     # roots on the import path (both `pkg` and `src.pkg` consumer styles).
     config["executionEnvironments"] = [
-        {"root": Path(relpath(project, root)).as_posix(), "extraPaths": include}
+        {"root": _posix_relpath(project, root), "extraPaths": include}
     ]
-    # Pin the interpreter py-canon itself is running under: without an activated
+    # Pin the interpreter canonist itself is running under: without an activated
     # venv, pyright falls back to the PATH interpreter and cannot resolve the
     # project's imports (bitten for real by the CI self-host job).
     venv = running_venv()
     if venv is not None:
-        config["venvPath"] = Path(relpath(venv.parent, root)).as_posix()
+        config["venvPath"] = _posix_relpath(venv.parent, root)
         config["venv"] = venv.name
     return config
 
@@ -218,6 +218,24 @@ def running_venv() -> Path | None:
         return None
     candidate = executable.parent.parent
     return candidate if (candidate / "pyvenv.cfg").is_file() else None
+
+
+def _posix_relpath(path: Path, start: Path) -> str:
+    """``relpath(path, start)`` in posix form, absolute fallback across drives.
+
+    ``os.path.relpath`` raises ``ValueError`` on Windows when the paths sit on
+    different drives — e.g. a consumer project under the temp dir on ``C:`` while
+    the running interpreter's venv lives on ``D:`` (exactly the CI matrix's
+    Windows leg). ``include``/``executionEnvironments.root`` are always under the
+    project, so only ``venvPath`` can actually cross drives; an absolute
+    ``venvPath`` is still valid for pyright (only ``include`` must remain
+    config-relative), so fall back to the absolute posix path instead of
+    crashing.
+    """
+    try:
+        return Path(relpath(path, start)).as_posix()
+    except ValueError:
+        return path.as_posix()
 
 
 def _render_ini(merged: Mapping[str, Any]) -> str:
@@ -243,6 +261,6 @@ def _emit_ini_section(name: str, section: Mapping[str, Any], lines: list[str]) -
 
 
 def _preset_text(name: str) -> str:
-    source = resources.files("pycanon.presets").joinpath(name)
+    source = resources.files("canonist.presets").joinpath(name)
     with resources.as_file(source) as path:
         return path.read_text(encoding="utf-8")

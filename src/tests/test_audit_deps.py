@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from pycanon.lib import audit_deps
+from canonist.lib import audit_deps
 
 if TYPE_CHECKING:
     from collections.abc import Sequence

@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from pycanon.lib import presets, runner, source_glob
+from canonist.lib import presets, runner, source_glob
 
 if TYPE_CHECKING:
     from collections.abc import Sequence

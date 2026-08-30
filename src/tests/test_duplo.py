@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from pycanon.lib import duplo
+from canonist.lib import duplo
 
 if TYPE_CHECKING:
     from pathlib import Path

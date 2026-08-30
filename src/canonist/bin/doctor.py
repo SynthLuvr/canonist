@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from importlib import util
 from pathlib import Path
 
-from pycanon.lib import duplo, presets
+from canonist.lib import duplo, presets
 
 REQUIRED_PYTHON = (3, 14)
 BUNDLED_TOOLS = ("ruff", "pyright", "pytest", "pip_audit")
@@ -67,7 +67,7 @@ def check_overrides(project: Path) -> CheckResult:
         presets.load_overrides(project)
     except tomllib.TOMLDecodeError as exc:
         return CheckResult("overrides", False, f"pyproject.toml is not valid TOML: {exc}")
-    return CheckResult("overrides", True, "[tool.pycanon] overrides load cleanly")
+    return CheckResult("overrides", True, "[tool.canonist] overrides load cleanly")
 
 
 def check_duplo() -> CheckResult:
@@ -78,7 +78,7 @@ def check_duplo() -> CheckResult:
     return CheckResult(
         "duplo",
         None,
-        "not downloaded yet; the first `pycanon lint` fetches it "
+        "not downloaded yet; the first `canonist lint` fetches it "
         "(if the download or exec is blocked: SKIPPED locally, fatal in CI)",
     )
 

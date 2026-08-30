@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from pycanon.bin import cli
+from canonist.bin import cli
 from tests.fixturelib import (
     LINT_ERROR_MODULE,
     UNFORMATTED_MODULE,

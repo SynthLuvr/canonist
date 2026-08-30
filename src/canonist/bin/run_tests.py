@@ -1,6 +1,6 @@
 """The test command: pytest wrapped with the canonical coverage gate.
 
-ts-canon delegates ``test`` to vitest directly; py-canon wraps pytest because
+ts-canon delegates ``test`` to vitest directly; canonist wraps pytest because
 the coverage-gate configuration is exactly the kind of thing that drifts.
 """
 
@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from pycanon.lib import presets, runner, source_glob
+from canonist.lib import presets, runner, source_glob
 
 if TYPE_CHECKING:
     from collections.abc import Sequence

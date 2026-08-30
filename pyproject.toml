@@ -1,5 +1,5 @@
 [project]
-name = "py-canon"
+name = "canonist"
 version = "0.1.0"
 description = "The SynthLuvr Python toolchain as one dependency: lint, format, test, doctor, migrate"
 readme = "README.md"
@@ -27,41 +27,41 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/pycanon"]
+packages = ["src/canonist"]
 
 # --- Self-host: this repo consumes its own presets (see README) -----------
 
-# Editor parity only; `python -m pycanon lint` generates the effective config.
+# Editor parity only; `python -m canonist lint` generates the effective config.
 [tool.pyright]
-extends = "src/pycanon/presets/pyright.base.json"
+extends = "src/canonist/presets/pyright.base.json"
 
 # Local deltas over the bundled presets (this is the consumer override
 # mechanism, applied to ourselves: preset values deep-merge, lists replace).
-[tool.pycanon.ruff.lint.isort]
-known-first-party = ["pycanon"]
+[tool.canonist.ruff.lint.isort]
+known-first-party = ["canonist"]
 
-[tool.pycanon.ruff.lint.per-file-ignores]
+[tool.canonist.ruff.lint.per-file-ignores]
 # The runner and the ported gates spawn subprocesses by design.
-"src/pycanon/lib/runner.py" = ["S404", "S603"]
-"src/pycanon/lib/audit_deps.py" = ["S404", "S603"]
+"src/canonist/lib/runner.py" = ["S404", "S603"]
+"src/canonist/lib/audit_deps.py" = ["S404", "S603"]
 # duplo downloads, extracts, and executes a pinned binary by design.
-"src/pycanon/lib/duplo.py" = ["S"]
+"src/canonist/lib/duplo.py" = ["S"]
 
 [tool.poe.tasks.lint]
 help = "Full static pipeline (format check, lint, typecheck, lock, audit, dupes)"
-cmd = "python -m pycanon lint"
+cmd = "python -m canonist lint"
 
 [tool.poe.tasks.format]
 help = "Auto-format and auto-fix lint issues (writes changes)"
-cmd = "python -m pycanon format"
+cmd = "python -m canonist format"
 
 [tool.poe.tasks.test]
 help = "Run the test suite with the 80% coverage gate"
-cmd = "python -m pycanon test"
+cmd = "python -m canonist test"
 
 [tool.poe.tasks.doctor]
 help = "Diagnose the environment, bundled tools, and generated configs"
-cmd = "python -m pycanon doctor"
+cmd = "python -m canonist doctor"
 
 [tool.poe.tasks.check]
 help = "Everything: the full lint pipeline plus the test suite"

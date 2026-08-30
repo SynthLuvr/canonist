@@ -30,6 +30,34 @@ filecache = [
 ]
 
 [[package]]
+name = "canonist"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "pip-audit" },
+    { name = "pyright" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "ruff" },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "poethepoet" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "pip-audit", specifier = ">=2.10.1" },
+    { name = "poethepoet", marker = "extra == 'dev'", specifier = ">=0.48.0" },
+    { name = "pyright", specifier = ">=1.1.411" },
+    { name = "pytest", specifier = ">=9.1.1" },
+    { name = "pytest-cov", specifier = ">=7.1.0" },
+    { name = "ruff", specifier = ">=0.16.3" },
+]
+provides-extras = ["dev"]
+
+[[package]]
 name = "certifi"
 version = "2026.7.22"
 source = { registry = "https://pypi.org/simple" }
@@ -467,34 +495,6 @@ sdist = { url = "https://files.pythonhosted.org/packages/5c/92/93a4af9511b8c7c64
 wheels = [
     { url = "https://files.pythonhosted.org/packages/59/8d/d7c9455b15f8d2d7ce57e7b71a8ef8d02d9992ae4283c9777120620c9022/poethepoet-0.48.0-py3-none-any.whl", hash = "sha256:98da6096d060f49b8d84034770265863fb7dc92a40233b7694b9d216ac68737d", size = 185808, upload-time = "2026-07-05T21:48:28.601Z" },
 ]
-
-[[package]]
-name = "py-canon"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "pip-audit" },
-    { name = "pyright" },
-    { name = "pytest" },
-    { name = "pytest-cov" },
-    { name = "ruff" },
-]
-
-[package.optional-dependencies]
-dev = [
-    { name = "poethepoet" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "pip-audit", specifier = ">=2.10.1" },
-    { name = "poethepoet", marker = "extra == 'dev'", specifier = ">=0.48.0" },
-    { name = "pyright", specifier = ">=1.1.411" },
-    { name = "pytest", specifier = ">=9.1.1" },
-    { name = "pytest-cov", specifier = ">=7.1.0" },
-    { name = "ruff", specifier = ">=0.16.3" },
-]
-provides-extras = ["dev"]
 
 [[package]]
 name = "py-serializable"

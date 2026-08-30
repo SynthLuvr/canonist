@@ -4,17 +4,17 @@ Instructions for AI coding agents working in this repository.
 
 ## What this repo is
 
-`py-canon` **is** the toolchain. Preset, rule, threshold, and pipeline changes belong
+`canonist` **is** the toolchain. Preset, rule, threshold, and pipeline changes belong
 here — version-bump and release them; consumer repos pick changes up by bumping their
-`py-canon` dependency. Never advise consumers to add per-step tool scripts back to
+`canonist` dependency. Never advise consumers to add per-step tool scripts back to
 their repos.
 
 ## Quick Start
 
 ```bash
 uv sync --all-extras   # install dependencies (bundled tools + poethepoet)
-uv run poe lint        # full static pipeline — which is `python -m pycanon lint`
-uv run poe test        # test suite (80% coverage gate on src/pycanon)
+uv run poe lint        # full static pipeline — which is `python -m canonist lint`
+uv run poe test        # test suite (80% coverage gate on src/canonist)
 ```
 
 **If `uv run poe` fails with `Access is denied` (os error 5):** `.venv\Scripts\poe.exe`
@@ -25,7 +25,7 @@ executables refuses to run on managed Windows machines. Use the module form inst
 uv run python -m poethepoet check
 ```
 
-The py-canon CLI itself is `python -m pycanon <command>` for the same reason: it ships
+The canonist CLI itself is `python -m canonist <command>` for the same reason: it ships
 no console-script entry point, and its runner spawns every tool as
 `python -m <module>`.
 
@@ -34,7 +34,7 @@ no console-script entry point, and its runner spawns every tool as
 Always run these before considering work complete:
 
 ```bash
-uv run poe check   # `pycanon lint` + `pycanon test`
+uv run poe check   # `canonist lint` + `canonist test`
 ```
 
 All steps must pass with zero errors. One caveat: the duplication gate runs a
@@ -47,10 +47,10 @@ or rename the binary to get around the block.
 
 This repo consumes its own presets:
 
-- The canonical configs live in `src/pycanon/presets/` (ruff.toml, pyright.base.json,
+- The canonical configs live in `src/canonist/presets/` (ruff.toml, pyright.base.json,
   pytest.toml). Changing them changes every consumer at the next release — treat rule
   tightenings as semver-minor events minimum and record them in CHANGELOG.md.
-- This repo's own `pyproject.toml` keeps only local deltas under `[tool.pycanon.*]`
+- This repo's own `pyproject.toml` keeps only local deltas under `[tool.canonist.*]`
   (same override mechanism consumers use). Do not add `[tool.ruff]` /
   `[tool.pytest.ini_options]` / `[tool.coverage]` blocks back.
 - CI's `self-host` job builds the wheel and runs the pipeline from a fresh venv, so
@@ -58,7 +58,7 @@ This repo consumes its own presets:
 
 ## Preset generation invariants (do not regress)
 
-- Generated configs land in `<project>/.pycanon/` and are cleaned up unless
+- Generated configs land in `<project>/.canonist/` and are cleaned up unless
   `--keep-config`.
 - The pyright config must stay **inside the project** (pyright resolves `include`
   relative to the config file's directory and ignores absolute paths).
@@ -79,14 +79,14 @@ This repo consumes its own presets:
 ## Formatting
 
 ```bash
-uv run poe format     # `pycanon format`: ruff format + ruff check --fix
+uv run poe format     # `canonist format`: ruff format + ruff check --fix
 ```
 
 ## Project Structure
 
-- `src/pycanon/bin/` — CLI subcommands (cli, lint, format, run_tests, doctor, migrate)
-- `src/pycanon/lib/` — runner, presets, source_glob, audit_deps, duplo, toml_write
-- `src/pycanon/presets/` — the shipped canonical configs (data files)
+- `src/canonist/bin/` — CLI subcommands (cli, lint, format, run_tests, doctor, migrate)
+- `src/canonist/lib/` — runner, presets, source_glob, audit_deps, duplo, toml_write
+- `src/canonist/presets/` — the shipped canonical configs (data files)
 - `src/tests/` — test suite (mirrors ts-canon's coverage of cli/lint/doctor/migrate/
   runner/presets/audit/duplo plus real-tool integration tests)
 - Python ≥ 3.14, managed by uv; `uv.lock` is committed and CI installs `--locked`

@@ -18,8 +18,8 @@ htmlcov/
 coverage.xml
 coverage/
 
-# py-canon generated configs (written on every run, kept only with --keep-config)
-.pycanon/
+# canonist generated configs (written on every run, kept only with --keep-config)
+.canonist/
 .pytest_cache/
 
 # Duplo (lucidshark-duplo local cache, if --cache is enabled)

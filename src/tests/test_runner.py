@@ -3,7 +3,7 @@ from __future__ import annotations
 import sys
 from typing import TYPE_CHECKING
 
-from pycanon.lib import runner
+from canonist.lib import runner
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -27,13 +27,13 @@ def test_run_command_echoes_the_command(capsys: pytest.CaptureFixture[str]) -> N
 def test_missing_executable_reports_error_and_returns_one(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    code = runner.run_command(["pycanon-definitely-not-a-real-binary"])
+    code = runner.run_command(["canonist-definitely-not-a-real-binary"])
     assert code == 1
     assert "could not run" in capsys.readouterr().err
 
 
 def test_run_module_invokes_python_dash_m() -> None:
-    assert runner.run_module("pycanon", ["--version"]) == 0
+    assert runner.run_module("canonist", ["--version"]) == 0
 
 
 def test_run_command_runs_in_cwd(tmp_path: Path) -> None:
