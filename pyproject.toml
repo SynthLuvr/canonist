@@ -3,6 +3,8 @@ name = "canonist"
 version = "0.1.0"
 description = "The SynthLuvr Python toolchain as one dependency: lint, format, test, doctor, migrate"
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.14"
 # The bundled tools are hard dependencies on purpose: Python dependency
 # groups are not transitive, so a dev-group here would not reach consumers.

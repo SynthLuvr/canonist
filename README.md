@@ -102,7 +102,11 @@ pipeline against this checkout with the built artifact (see the `self-host` job 
 ## Versioning
 
 Semver: rule additions or threshold tightenings that can fail previously-green
-repos are **minor** bumps at minimum and are documented in
-[CHANGELOG.md](CHANGELOG.md); breaking CLI/config changes are **major**. Until
-1.0, tighten freely but document. Releases are tag-driven (`v*`) and publish
-to PyPI via Trusted Publishing.
+repos are **minor** bumps at minimum and are called out with each release;
+breaking CLI/config changes are **major**. Until 1.0, tighten freely but
+document. Releases are tag-driven (`v*`) and publish to PyPI via Trusted
+Publishing.
+
+## License
+
+MIT — see [LICENSE](LICENSE).

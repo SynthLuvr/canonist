@@ -49,7 +49,7 @@ This repo consumes its own presets:
 
 - The canonical configs live in `src/canonist/presets/` (ruff.toml, pyright.base.json,
   pytest.toml). Changing them changes every consumer at the next release — treat rule
-  tightenings as semver-minor events minimum and record them in CHANGELOG.md.
+  tightenings as semver-minor events minimum and call them out with the release.
 - This repo's own `pyproject.toml` keeps only local deltas under `[tool.canonist.*]`
   (same override mechanism consumers use). Do not add `[tool.ruff]` /
   `[tool.pytest.ini_options]` / `[tool.coverage]` blocks back.
@@ -94,5 +94,5 @@ uv run poe format     # `canonist format`: ruff format + ruff check --fix
 ## Release
 
 Push a `vX.Y.Z` tag; the release workflow runs the full check, builds, and publishes
-to PyPI via Trusted Publishing (environment `pypi`). Document every gate/rule change
-in CHANGELOG.md per the semver policy in README.md.
+to PyPI via Trusted Publishing (environment `pypi`). Call out every gate/rule change
+with its release per the semver policy in README.md.
