@@ -93,6 +93,9 @@ uv run poe format     # `canonist format`: ruff format + ruff check --fix
 
 ## Release
 
-Push a `vX.Y.Z` tag; the release workflow runs the full check, builds, and publishes
-to PyPI via Trusted Publishing (environment `pypi`). Call out every gate/rule change
-with its release per the semver policy in README.md.
+Dispatch the **Release** workflow (Actions → Release → Run workflow) with an exact
+version or a patch/minor/major bump. It runs the full check, bumps `pyproject.toml`
+and `uv.lock`, publishes to PyPI via Trusted Publishing (environment `pypi`), then
+opens and merges the version-bump PR, tags `vX.Y.Z`, and creates the GitHub release.
+Use the workflow's `notes` input to call out every gate/rule change per the semver
+policy in README.md. Pushing tags no longer publishes — the workflow creates them.
