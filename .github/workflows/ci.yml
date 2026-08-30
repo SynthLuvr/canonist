@@ -31,8 +31,8 @@ jobs:
       - name: Test
         run: uv run python -m poethepoet test
 
-  # Stronger than ts-canon's link-self-host: the pipeline always runs against
-  # the *built artifact*, via a fresh venv that never sees the dev install.
+  # The pipeline always runs against the *built artifact*, via a fresh venv
+  # that never sees the dev install.
   self-host:
     runs-on: ubuntu-latest
     steps:

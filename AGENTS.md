@@ -87,8 +87,8 @@ uv run poe format     # `canonist format`: ruff format + ruff check --fix
 - `src/canonist/bin/` — CLI subcommands (cli, lint, format, run_tests, doctor, migrate)
 - `src/canonist/lib/` — runner, presets, source_glob, audit_deps, duplo, toml_write
 - `src/canonist/presets/` — the shipped canonical configs (data files)
-- `src/tests/` — test suite (mirrors ts-canon's coverage of cli/lint/doctor/migrate/
-  runner/presets/audit/duplo plus real-tool integration tests)
+- `src/tests/` — test suite (covers cli/lint/doctor/migrate/runner/presets/audit/
+  duplo plus real-tool integration tests)
 - Python ≥ 3.14, managed by uv; `uv.lock` is committed and CI installs `--locked`
 
 ## Release

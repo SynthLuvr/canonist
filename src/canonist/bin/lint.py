@@ -1,9 +1,8 @@
 """The lint pipeline: fail-fast, each step's exit code propagates.
 
-Parity with ts-canon's ``lint``: biome-check → ruff format --check + ruff
-check; oxlint+tsgolint → pyright (strict); peers-check → uv lock --check;
-``pnpm audit --prod`` → pip-audit; jscpd → lucidshark-duplo. ``--fast`` skips
-the two slow steps (audit, duplication gate).
+Steps: ruff format --check + ruff check; pyright (strict); uv lock --check;
+pip-audit (SCA); lucidshark-duplo (duplication gate). ``--fast`` skips the
+two slow steps (audit, duplication gate).
 """
 
 from __future__ import annotations

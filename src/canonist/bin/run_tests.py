@@ -1,7 +1,7 @@
 """The test command: pytest wrapped with the canonical coverage gate.
 
-ts-canon delegates ``test`` to vitest directly; canonist wraps pytest because
-the coverage-gate configuration is exactly the kind of thing that drifts.
+canonist wraps pytest because the coverage-gate configuration is exactly the
+kind of thing that drifts.
 """
 
 from __future__ import annotations

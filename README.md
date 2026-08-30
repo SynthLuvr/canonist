@@ -1,8 +1,7 @@
 # canonist
 
-The SynthLuvr Python toolchain as **one versioned, distributable dependency** — the
-[`ts-canon`](https://github.com/SynthLuvr/ts-canon) pattern, for Python. Invoke as
-`python -m canonist` (no console-script launcher, so it works on
+The SynthLuvr Python toolchain as **one versioned, distributable dependency**.
+Invoke as `python -m canonist` (no console-script launcher, so it works on
 managed Windows endpoints that block generated `.exe` stubs).
 
 One dev dependency replaces the duplicated Python toolchain — the Poe task blocks,
@@ -76,11 +75,11 @@ true local deltas in `pyproject.toml`:
 ## Why the tools are hard dependencies
 
 npm devDependencies are transitive; Python `[dependency-groups]` are not — a consumer
-that adds canonist as a dev dependency would not receive its group members. So, exactly
-like ts-canon's "regular deps, not peers" decision, the bundled tools (ruff, pyright,
-pytest, pytest-cov, pip-audit) are canonist's install dependencies. Poe stays
-consumer-side (it is the shell around the tools, not a tool), and the pinned
-lucidshark-duplo binary is downloaded at first use, exactly as in python-template.
+that adds canonist as a dev dependency would not receive its group members. So the
+bundled tools (ruff, pyright, pytest, pytest-cov, pip-audit) are canonist's install
+dependencies. Poe stays consumer-side (it is the shell around the tools, not a tool),
+and the pinned lucidshark-duplo binary is downloaded at first use, exactly as in
+python-template.
 
 ## Gates and skip policies
 
@@ -102,8 +101,8 @@ pipeline against this checkout with the built artifact (see the `self-host` job 
 
 ## Versioning
 
-Semver, mirroring ts-canon's policy: rule additions or threshold tightenings that can
-fail previously-green repos are **minor** bumps at minimum and are documented in
-[CHANGELOG.md](CHANGELOG.md); breaking CLI/config changes are **major**. Until 1.0,
-tighten freely but document. Releases are tag-driven (`v*`) and publish to PyPI via
-Trusted Publishing.
+Semver: rule additions or threshold tightenings that can fail previously-green
+repos are **minor** bumps at minimum and are documented in
+[CHANGELOG.md](CHANGELOG.md); breaking CLI/config changes are **major**. Until
+1.0, tighten freely but document. Releases are tag-driven (`v*`) and publish
+to PyPI via Trusted Publishing.
