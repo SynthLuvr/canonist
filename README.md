@@ -74,6 +74,7 @@ Two non-preset gates are configurable the same way:
 ```toml
 [tool.canonist.audit]
 service = "osv"              # pip-audit vulnerability service (default: pypi)
+resolve = false              # pip resolution dry-run before the audit (default: true)
 
 [tool.canonist.duplo]
 threshold = 10.0             # duplication-gate percentage (default: 5.0)
@@ -98,6 +99,13 @@ python-template.
   `[tool.canonist.audit] service = "osv"` when the audited set contains
   PEP 440 local-version builds (e.g. `torch==2.13.0+cu126` from a CUDA index),
   which the PyPI service cannot resolve — OSV audits them fine.
+  By default pip-audit first runs pip's resolution dry-run against the export,
+  which downloads every pinned wheel into a throwaway venv (multi-gigabyte for
+  CUDA-grade stacks) — the failure mode behind `Disk quota exceeded` on
+  disk-constrained CI runners. Set `[tool.canonist.audit] resolve = false` to
+  audit the exported pins as-is via `--disable-pip`: same pins, same service,
+  same verdicts, zero downloads (the export is already the complete,
+  hash-pinned transitive closure).
 - **Duplication gate** — lucidshark-duplo, 5% threshold, overridable per
   consumer via `[tool.canonist.duplo] threshold` (a positive number) when the
   codebase legitimately sits above the canonical bar. If the binary cannot be

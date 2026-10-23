@@ -5,6 +5,16 @@ dependency set with ``uv export`` into a temporary requirements file, then
 audit it with ``pip-audit --strict``. Implemented in Python (not a Poe
 ``shell`` task) so it runs identically on Linux, macOS, and Windows.
 
+By default the audit first runs pip's resolution dry-run against the export
+(what ``pip-audit`` does in requirements mode) so the audit sees the fully
+resolved graph. That dry-run downloads every pinned wheel into a throwaway
+virtualenv — multi-gigabyte for CUDA-grade stacks — which is exactly what
+disk-quota-exceeded failures on constrained CI runners look like. Consumers
+can skip it via ``[tool.canonist.audit] resolve = false``: the export is
+already the complete, hash-pinned transitive closure (``uv export`` always
+emits ``--hash``), so pip-audit's ``--disable-pip`` mode audits the same pins
+against the same service with zero downloads.
+
 The vulnerability service is configurable per consumer via
 ``[tool.canonist.audit] service`` (default ``pypi``). The PyPI-JSON service
 cannot audit local-version builds (e.g. ``torch==2.13.0+cu126`` from a CUDA
@@ -23,6 +33,7 @@ SERVICES = frozenset({"pypi", "osv", "esms"})
 """The vulnerability services pip-audit supports (its ``-s`` choices)."""
 
 DEFAULT_SERVICE = "pypi"
+DEFAULT_RESOLVE = True
 
 
 def build_export_command(requirements: Path) -> list[str]:
@@ -55,7 +66,31 @@ def audit_service(project: Path) -> str:
     return service
 
 
-def run_audit(project: Path, *, service: str = DEFAULT_SERVICE) -> int:
+def audit_resolve(project: Path) -> bool:
+    """Whether pip resolves the export before auditing: ``[tool.canonist.audit] resolve``.
+
+    Defaults to ``True`` (pip-audit's standard requirements-mode behavior).
+    ``False`` maps to pip-audit's ``--disable-pip`` — the exported pins are
+    audited as-is, with no resolution venv and no wheel downloads.
+    """
+    section = presets.as_table(presets.load_overrides(project).get("audit"))
+    resolve = section.get("resolve", DEFAULT_RESOLVE)
+    if not isinstance(resolve, bool):
+        raise ValueError(f"invalid [tool.canonist.audit] resolve: {resolve!r} (expected a boolean)")
+    return resolve
+
+
+def build_audit_args(requirements: Path, *, service: str, resolve: bool) -> list[str]:
+    """The pip-audit invocation for the exported requirements file."""
+    args = ["-r", str(requirements), "--strict", "-s", service]
+    if not resolve:
+        args.append("--disable-pip")
+    return args
+
+
+def run_audit(
+    project: Path, *, service: str = DEFAULT_SERVICE, resolve: bool = DEFAULT_RESOLVE
+) -> int:
     """Export and audit the project's production dependencies; return the exit code."""
     with tempfile.TemporaryDirectory() as tmp_dir:
         requirements = Path(tmp_dir) / "requirements.txt"
@@ -63,4 +98,6 @@ def run_audit(project: Path, *, service: str = DEFAULT_SERVICE) -> int:
         if code != 0:
             return code
         # The importable module is pip_audit (underscore); the console script is pip-audit.
-        return runner.run_module("pip_audit", ["-r", str(requirements), "--strict", "-s", service])
+        return runner.run_module(
+            "pip_audit", build_audit_args(requirements, service=service, resolve=resolve)
+        )

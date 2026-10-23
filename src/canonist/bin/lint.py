@@ -3,7 +3,8 @@
 Steps: ruff format --check + ruff check; pyright (strict); uv lock --check;
 pip-audit (SCA); lucidshark-duplo (duplication gate). ``--fast`` skips the
 two slow steps (audit, duplication gate). The audit service
-(``[tool.canonist.audit] service``) and the duplication threshold
+(``[tool.canonist.audit] service``), the pre-audit pip resolution
+(``[tool.canonist.audit] resolve``), and the duplication threshold
 (``[tool.canonist.duplo] threshold``) are configurable per consumer.
 """
 
@@ -50,6 +51,7 @@ def run_lint(paths: Sequence[str], *, fast: bool, keep: bool) -> int:
         return 2
     try:
         service = audit_deps.audit_service(project)
+        resolve = audit_deps.audit_resolve(project)
         threshold = duplo.configured_threshold(project)
     except ValueError as exc:
         print(f"error: {exc}", file=sys.stderr)
@@ -70,7 +72,7 @@ def run_lint(paths: Sequence[str], *, fast: bool, keep: bool) -> int:
             ),
             ("pyright", lambda: runner.run_module("pyright", ["-p", str(config.pyright.parent)])),
             ("uv lock --check", lambda: lock_check(project)),
-            ("pip-audit", lambda: audit_deps.run_audit(project, service=service)),
+            ("pip-audit", lambda: audit_deps.run_audit(project, service=service, resolve=resolve)),
             ("duplo", lambda: duplo.gate(threshold=threshold)),
         ]
         total = len(steps)

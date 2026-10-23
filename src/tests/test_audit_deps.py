@@ -103,3 +103,80 @@ def test_run_audit_passes_service_through(tmp_path: Path, monkeypatch: pytest.Mo
 
     assert audit_deps.run_audit(tmp_path, service="osv") == 0
     assert audit_args[-2:] == ["-s", "osv"]
+
+
+def test_audit_resolve_defaults_to_true(tmp_path: Path) -> None:
+    make_project(tmp_path)
+    assert audit_deps.audit_resolve(tmp_path) is True
+
+
+def test_audit_resolve_reads_canonist_override(tmp_path: Path) -> None:
+    make_project(tmp_path, pyproject_extra="[tool.canonist.audit]\nresolve = false\n")
+    assert audit_deps.audit_resolve(tmp_path) is False
+
+
+def test_audit_resolve_rejects_non_boolean(tmp_path: Path) -> None:
+    make_project(tmp_path, pyproject_extra="[tool.canonist.audit]\nresolve = 'nope'\n")
+    with pytest.raises(ValueError, match=r"invalid \[tool.canonist.audit\] resolve"):
+        audit_deps.audit_resolve(tmp_path)
+
+
+def test_build_audit_args_default_resolves(tmp_path: Path) -> None:
+    requirements = tmp_path / "requirements.txt"
+    assert audit_deps.build_audit_args(requirements, service="osv", resolve=True) == [
+        "-r",
+        str(requirements),
+        "--strict",
+        "-s",
+        "osv",
+    ]
+
+
+def test_build_audit_args_skips_resolution(tmp_path: Path) -> None:
+    requirements = tmp_path / "requirements.txt"
+    assert audit_deps.build_audit_args(requirements, service="osv", resolve=False) == [
+        "-r",
+        str(requirements),
+        "--strict",
+        "-s",
+        "osv",
+        "--disable-pip",
+    ]
+
+
+def test_run_audit_disable_pip_when_resolve_false(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    audit_args: list[str] = []
+
+    def fake_run_command(command: Sequence[str], *, cwd: Path | None = None) -> int:
+        return 0
+
+    def fake_run_module(module: str, args: Sequence[str] = (), *, cwd: Path | None = None) -> int:
+        audit_args.extend(args)
+        return 0
+
+    monkeypatch.setattr(audit_deps.runner, "run_command", fake_run_command)
+    monkeypatch.setattr(audit_deps.runner, "run_module", fake_run_module)
+
+    assert audit_deps.run_audit(tmp_path, resolve=False) == 0
+    assert audit_args[-1] == "--disable-pip"
+
+
+def test_run_audit_omits_disable_pip_by_default(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    audit_args: list[str] = []
+
+    def fake_run_command(command: Sequence[str], *, cwd: Path | None = None) -> int:
+        return 0
+
+    def fake_run_module(module: str, args: Sequence[str] = (), *, cwd: Path | None = None) -> int:
+        audit_args.extend(args)
+        return 0
+
+    monkeypatch.setattr(audit_deps.runner, "run_command", fake_run_command)
+    monkeypatch.setattr(audit_deps.runner, "run_module", fake_run_module)
+
+    assert audit_deps.run_audit(tmp_path) == 0
+    assert "--disable-pip" not in audit_args

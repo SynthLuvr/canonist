@@ -36,7 +36,7 @@ def test_pipeline_order_and_fail_fast(
         order.append("duplo")
         return 0
 
-    def fake_audit(project_arg: Path, *, service: str) -> int:
+    def fake_audit(project_arg: Path, *, service: str, resolve: bool) -> int:
         order.append("audit")
         return 0
 
@@ -75,7 +75,7 @@ def test_fast_skips_audit_and_duplo(
         order.append("duplo")
         return 0
 
-    def fake_audit(project_arg: Path, *, service: str) -> int:
+    def fake_audit(project_arg: Path, *, service: str, resolve: bool) -> int:
         order.append("audit")
         return 0
 
@@ -140,7 +140,8 @@ def test_audit_and_duplo_settings_flow_from_overrides(
     project = make_project(
         tmp_path,
         pyproject_extra=(
-            '[tool.canonist.audit]\nservice = "osv"\n\n[tool.canonist.duplo]\nthreshold = 12.5\n'
+            '[tool.canonist.audit]\nservice = "osv"\nresolve = false\n\n'
+            "[tool.canonist.duplo]\nthreshold = 12.5\n"
         ),
     )
     (project / "uv.lock").write_text("", encoding="utf-8")
@@ -158,8 +159,9 @@ def test_audit_and_duplo_settings_flow_from_overrides(
         seen["threshold"] = threshold
         return 0
 
-    def fake_audit(project_arg: Path, *, service: str) -> int:
+    def fake_audit(project_arg: Path, *, service: str, resolve: bool) -> int:
         seen["service"] = service
+        seen["resolve"] = resolve
         return 0
 
     monkeypatch.setattr(lint_cmd.runner, "run_module", fake_run_module)
@@ -168,7 +170,7 @@ def test_audit_and_duplo_settings_flow_from_overrides(
     monkeypatch.setattr(lint_cmd.audit_deps, "run_audit", fake_audit)
 
     assert lint_cmd.run_lint([], fast=False, keep=False) == 0
-    assert seen == {"service": "osv", "threshold": 12.5}
+    assert seen == {"service": "osv", "resolve": False, "threshold": 12.5}
 
 
 def test_invalid_gate_settings_are_usage_errors(
