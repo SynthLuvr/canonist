@@ -11,16 +11,16 @@ requires-python = ">=3.14"
 # Every tool moves in lockstep with this package's version.
 dependencies = [
     "pip-audit>=2.10.1",
-    "pyright>=1.1.411",
+    "pyright>=1.1.414",
     "pytest>=9.1.1",
     "pytest-cov>=7.1.0",
-    "ruff>=0.16.6",
+    "ruff>=0.17.2",
 ]
 
 [project.optional-dependencies]
 # Poe stays consumer-side: it is the shell around the tools, not a tool.
 dev = [
-    "poethepoet>=0.48.0",
+    "poethepoet>=0.49.0",
 ]
 
 [build-system]
